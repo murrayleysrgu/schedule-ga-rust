@@ -3,6 +3,11 @@ use rand::{Rng, seq::SliceRandom};
 use std::cmp::Ordering;
 use std::fmt;
 use version_check::Version;
+// use chrono::NaiveDate;
+// use chrono::offset::Local;
+
+pub mod schedule;
+pub use schedule::{Schedule, Task, WorkingDays, create_schedule, read_schedule_from_csv};
 
 
 // #[derive(Debug)]
@@ -28,6 +33,8 @@ pub enum Sex {
     Male,
     Female
 }
+
+
 
 impl Population {
 
@@ -63,11 +70,11 @@ impl Dna {
 
 impl fmt::Display for Dna {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        return write!(
+        write!(
             f,
-            "DNA: {}, Fitness:{}, Early {}, Late{}, Chromosme Length:{} Chromosome: {:?}",
+            "DNA: {}, Fitness:{}, Early {}, Late{}, Chromosme Length:{} Chromosome: {:?}\n",
             self.sex, self.fitness, self.early, self.late, self.genome_sequence.len(), self.genome_sequence
-        );
+        )
     }
 }
 
@@ -106,7 +113,8 @@ impl Fitness for Population{
         let genome = self.members[0].genome_sequence.len();
         match genome{
             yes if yes == schedule.tasks.len() => {
-            
+
+                
             for i in 0..self.members.len(){
                 // println!("Cecking fitness of member {i}");
                 self.members[i].calculate_fitness(&schedule);
@@ -120,6 +128,31 @@ impl Fitness for Population{
 
     }
 }
+
+
+
+
+
+
+// Concurrency method - wasn't faster
+//
+// impl Fitness for Population {
+//     fn calculate_fitness(&mut self, schedule: &Schedule) {
+//         let genome = self.members[0].genome_sequence.len();
+//
+//         match genome {
+//             yes if yes == schedule.tasks.len() => {
+//                 self.members.par_iter_mut().for_each(|member| {
+//                     member.calculate_fitness(&schedule);
+//                 });
+//             }
+//             _ => panic!("MISMATCHED GENOME SEQUENCES"),
+//         }
+//     }
+// }
+
+
+
 
 impl Breed for Population{
     fn breed(&mut self,top: usize) {
@@ -329,20 +362,20 @@ impl Fitness for Dna {
             if let Some(task) = schedule.tasks.get(self.genome_sequence[i]) {
                 // println!("Genome: {}", self.genome_sequence[i]);
                 start_date = start_date + task.ctr;        
-
-                // println!("Task: {} Start: {} Est.: {} Deadline: {} CTR: {}", task.id, task.start, start_date, task.deadline, task.ctr);
-                if task.deadline < start_date {
+                let task_deadline = task.deadline_days.unwrap();
+                // println!("Task: {} Start: {} Est.: {} Deadline: {} CTR: {}", task.id, task.start, start_date, task.deadline_days, task.ctr);
+                if task_deadline < start_date {
                     // score +=1;
                     // late +=1;
-                    late = late + (start_date - task.deadline);
-                    score = score + (start_date - task.deadline);
+                    late = late + (start_date - task_deadline);
+                    score = score + (start_date - task_deadline);
                     // println!("Late");
                 }
-                if task.deadline > start_date {
+                if task_deadline > start_date {
                     // score +=1;
                     // early +=1;
-                    score = score + (task.deadline - start_date);
-                    early = early + (task.deadline - start_date);
+                    score = score + (task_deadline - start_date);
+                    early = early + (task_deadline - start_date);
                     // println!("Early");
                 }
                 } else {
@@ -356,11 +389,6 @@ impl Fitness for Dna {
         self.late = late;
     }
 }
-
-
-// trait Display {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result; 
-// }
 
 
 
@@ -377,6 +405,7 @@ fn info () {
         None => println!("Failed to read the version no. of Rust.")
     };
 
+    println!("Threads Available: {}", num_cpus::get());
     // println!("???"); 
     println!(""); 
     println!("--------------------------------"); 
@@ -386,84 +415,65 @@ fn info () {
 }
 
 
-
-
-
-
-#[derive(Debug)]
-pub struct Schedule {
-    pub tasks: Vec<Task>
-}
-#[derive(Debug)]
-pub struct Task {
-    // id: usize,
-    // start: u64,
-    // end: u64,
-    pub deadline: u64,
-    pub ctr: u64,
-}
-
-// Generate a random schedule
-pub fn create_schedule(jobs: usize) -> Schedule{
-    let mut rng = rand::thread_rng();
-    let mut schedule = Schedule {
-        tasks: Vec::new(),
-    };
-    // let mut start_date = Utc::now(); // Local::now().na:wxffive_local();
-    let mut start_date = 0; 
-    for _ in 0..jobs{
-        let  ctr = rng.gen_range(1..5);
-        // let ctr = 5;
-        start_date = start_date + ctr;
-        let task = Task {
-            // id: i,
-            // start: 0,
-            ctr,
-            deadline: start_date,
-            // end: 0,
-            
-        };
-    schedule.tasks.push(task);
-    // schedule.tasks.shuffle(&mut rng);
-    // schedule.tasks.reverse();
+pub struct GeneticAlgorithmConfig {
+    pub population_size: usize,
+    pub mutation_rate: f64,
+    pub crossover_method: CrossoverMethod,
+    pub mutation_method: MutationMethod,
     }
-    // schedule.tasks.reverse();
-    schedule
- }
 
+pub enum CrossoverMethod {
+    Uniform,
+    SinglePoint,
+}
 
-pub fn simulation(pop_size: usize, genome_length: usize, schedule: &Schedule) -> Population{
+pub enum MutationMethod {
+    Uniform,
+    SinglePoint,
+}
+
+fn coverage(search_space: &Vec<f32>) -> f32{
+    let mut cover = 0;
+    for i in 0..search_space.len(){
+        if search_space[i] != 0. {
+            cover +=1;
+        }
+    }
+    let cover = cover as f32;
+    let search_space = search_space.len() as f32;
+    let coverage = 100.*cover/search_space;
+    coverage
+}
+
+pub fn simulation(schedule: &Schedule, config: GeneticAlgorithmConfig) -> Population{
 
 
     info();
-
+    let genome_length = schedule.tasks.len();
+    let population_size = config.population_size;
     let start = Instant::now();
-    let mut world = Population::new(pop_size, genome_length);
+    let mut world = Population::new(population_size, genome_length);
     let duration = start.elapsed();
     let first = true;
-    println!("Time elapsed to generate population of {} x {} is: {:?}", pop_size, genome_length, duration);
+
+    println!("Time elapsed to generate population of {} x {} is: {:?}", population_size, genome_length, duration);
+
     world.calculate_fitness(&schedule);
     world.members.sort();
  
     let mut i = 0;
     loop {
 
-
         i=i+1;
         world.breed(20);
         world.calculate_fitness(&schedule);
         world.members.sort();
-        // world.evolution.push(world.members[0].fitness);
-        let mut cover = 0;
-        for i in 0..world.search_space.len(){
-            if world.search_space[i] != 0. {
-                cover +=1;
-            }
-        }
-        let pcover = 100.*cover as f32/world.search_space.len() as f32;
+        let pcover = coverage(&world.search_space);
+
         if first == true {
-        print!("{}: Mini Fitness {}, Early: {} :: Late {}, Size: {:?} x {}  Coverage: {:.2}%    \r",i,world.members[0].fitness, world.members[0].early, world.members[0].late, world.members[0].genome_sequence.len(), world.members.len(), pcover);
+            print!("{}: Min Fitness {}, Early: {} :: Late {}, Size: {:?} x {}  Coverage: {:.2}%    \r",i,world.members[0].fitness, world.members[0].early, world.members[0].late, world.members[0].genome_sequence.len(), world.members.len(), pcover);
         }
+
         // Optimal solution found
         if world.members[0].fitness ==0 && first == true{
             println!();
@@ -474,9 +484,13 @@ pub fn simulation(pop_size: usize, genome_length: usize, schedule: &Schedule) ->
             println!("Simulation completed in {:?}", duration);            
             // println!("Dominance: {:?}",world.dominance);
             // first = false;
+
+            return world;
+        }
+        if i > 100000 {
+            println!();
+            println!("Solution not found in {} generations",i);
             return world;
         }
     }
 }
-
-
