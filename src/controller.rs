@@ -19,6 +19,7 @@ pub fn index() -> String {
 }
 #[get("/gaapi/schedule")]
 pub fn schedule() -> Json<JobOrder>{
+    // Pause to simulatte calculation time
     thread::sleep(Duration::from_secs(6));
     let numbers: Vec<u32> = (0..=345 as u32).collect();
     let my_struct = JobOrder { job_order: numbers };
@@ -33,17 +34,18 @@ pub fn data() -> Json<JobOrder>{
         let json = serde_json::to_string(&my_struct).expect("Failed to convert to JSON");
    Json(my_struct) 
 }
-// #[get("/jobcards")]
-// pub fn job_cards() -> Json<Vec<JobCard2>> {
-//     use crate::schema::job_cards::dsl::job_cards;
-//     let connection = &mut database::establish_connection();
-//     job_cards.load::<JobCard2>(connection).map(Json).expect("Error loading jobcards")
-// }
-//
-// #[get("/jobs")]
-// pub fn jobs() -> Json<Vec<JobCard2>> {
-//     use crate::schema::JobCard::dsl::JobCard;
-//     let connection = &mut database::establish_connection();
-//     JobCard.load::<JobCard2>(connection).map(Json).expect("Error loading jobcards")
-// }
-//
+
+#[get("/jobcards")]
+pub fn job_cards() -> Json<Vec<JobCard2>> {
+    use crate::schema::job_cards::dsl::job_cards;
+    let connection = &mut database::establish_connection();
+    job_cards.load::<JobCard2>(connection).map(Json).expect("Error loading jobcards")
+}
+
+#[get("/jobs")]
+pub fn jobs() -> Json<Vec<JobCard2>> {
+    use crate::schema::JobCard::dsl::JobCard;
+    let connection = &mut database::establish_connection();
+    JobCard.load::<JobCard2>(connection).map(Json).expect("Error loading jobcards")
+}
+

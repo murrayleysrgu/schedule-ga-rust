@@ -57,7 +57,6 @@ impl Population {
     fn new(size: usize, genome_length: usize) -> Population {
         let mut population = Vec::with_capacity(size);
         let evolution = Vec::with_capacity(3000);
-        // evolution.push(0);
         let search_spce = vec![0.0;genome_length * genome_length];
         let current_search_space = vec![0.0;genome_length * genome_length];
         let dominance = vec![0;genome_length];
@@ -81,6 +80,7 @@ impl Population {
         let width = genome_length*zoom;
         let zone = width * pop_size ;
 
+        // Uncomment for verification checks
         // println!("Size {}",frame.len());
         // let win_width = frame.len() / 4 / (zoom * pop_size*3 + genome_length) ;
         // println!("zoom {}",zoom);
@@ -94,13 +94,9 @@ impl Population {
             if i < zone * zoom{            /* let zoom = 2; */
             let y = (i / (width))/zoom as usize;
             let x = ((i % (width))/zoom ) as usize;
-                // let fit = self.members[y].fitness;
-                // let alpha = 255 - (255.0 *  (zoom as f32 * fit as f32 /width as f32))as u32 ;
+             
                 let alpha = 255;
-
-                // let genome = (zoom as f32 * genome_length as f32 * self.members[y].genome_sequence[x] as f32 / width as f32) as u8;
                 let genome = (zoom as f32 * genome_length as f32 * self.members[y].genome_sequence[x] as f32 / width as f32) as u8;
-                // pixel.copy_from_slice(&[genome, genome, genome, alpha as u8]);
                 pixel.copy_from_slice(&[255, genome, 0, alpha as u8]);
               
 
@@ -109,14 +105,10 @@ impl Population {
                 let x = ((i-width*pop_size*zoom) % (width))/zoom as usize;
                 let y = ((i-(width*zoom*pop_size)) / (width))/zoom as usize;
 
-                // let fit = self.members[y].fitness;
                 let alpha = 255;
 
                 let genome = (zoom as f32 * genome_length as f32 * self.members[y].female_chromosome[x] as f32 / width as f32) as u8;
-                //
-                /* pixel.copy_from_slice(&[0, genome, 255, alpha as u8]); */
-                // pixel.copy_from_slice(&[255, genome, 0, alpha as u8]);
-                // pixel.copy_from_slice(&[0, 255,0 , 255 as u8]);
+  
                 match config.organism_type {
                     OrganismType::Haploid => pixel.copy_from_slice(&[0, 0,0 , 255 as u8]),
                     OrganismType::Diploid => pixel.copy_from_slice(&[0, genome, 255, alpha as u8]),
@@ -126,7 +118,6 @@ impl Population {
                 let x = ((i-2*zone*zoom) % (width))/zoom as usize;
                 let y = ((i-2*zone*zoom) / (width))/zoom as usize;
 
-                // let fit = self.members[y].fitness;
                 let alpha = 255;
                 let epi =  10*self.members[y].epigenome[x];
                 if epi >0 {
@@ -138,51 +129,40 @@ impl Population {
                 } else {
                     pixel.copy_from_slice(&[0, 255, 0, alpha as u8]);
                 }
-                // let genome = (zoom as f32 * genome_length as f32 * self.members[y].genome_sequence[x] as f32 / width as f32) as u8;
 
-                // pixel.copy_from_slice(&[0, genome,0 , alpha as u8]);           
-                // pixel.copy_from_slice(&[genome, genome, genome, 255 as u8]);
             
             } else {
                 let k = i - (width * pop_size * zoom)*3;
                 let y = (k / (width)) as usize;
                 let ss = k - y * (zoom -1 ) * genome_length as usize;
+
+                // uncomment for verification checks
                 // if y == 1 {
                 //     print!("{} {} ", k, ss);
                 // }
+
                 if ss <genome_length * genome_length{
                     let x = (k % (width))/zoom as usize;
                     let y = (k / (width))/zoom as usize;
                  
-                    // let pix: u8 = (self.search_space[x+y*genome_length]) as u8;
                     let pig: u8 = (self.search_space[ss]/50.) as u8;
-                    // let pib: u8 = (self.search_space[x+y*genome_length]/1024.) as u8;
                     let pis: u8 = (self.current_search_space[ss]) as u8;
-                    // let pix: u8 = (self.search_space[ss] * 1.) as u8;
                     let pix: u8 = (self.search_space[ss]*1.) as u8;
                     if k % width <= genome_length {
-                        pixel.copy_from_slice(&[pix, pix, pix, 255]);
                         pixel.copy_from_slice(&[pix, pig, pig, 255]);
-                        // pixel.copy_from_slice(&[pig, pig, pix, 255]);
                     } else if k % width <= 2*genome_length {
                         pixel.copy_from_slice(&[pis, pis, pis, 255]);
-                        // pixel.copy_from_slice(&[pig, pig, pix, 255]);
-
                     } else if k % width <= 3*genome_length {
                         pixel.copy_from_slice(&[pix*255, pix*255, pix*255, 255]);
-                        // pixel.copy_from_slice(&[pig, pig, pix, 255]);
                      } else if k % width <= 4*genome_length {
                         pixel.copy_from_slice(&[pig, pig, pix, 255]);
-                        // pixel.copy_from_slice(&[pig, pig, pix, 255]);                  
                         } 
 
                     else {
                         pixel.copy_from_slice(&[0, 0, 0, 255]);
                     }
                     if x*zoom == self.members[0].genome_sequence[y*zoom] {
-                        // pixel.copy_from_slice(&[255, 255 ,255, 255]);
                     }
-                    // pixel.copy_from_slice(&[pix, pig, pig, 255]);
                 }
                 // pixel.copy_from_slice(&[123, 123, 123, 155 as u8]);
             }
@@ -191,15 +171,10 @@ impl Population {
         _ => {
             let y = (i / (width))/zoom as usize;
             let x = ((i % (width))/zoom ) as usize;
-            // let y = i/(genome_length*zoom)/zoom;
-            // let x = (i-y*genome_length*zoom)/zoom;
             let ss = y*genome_length+x;  
             if ss <self.current_search_space.len(){
-            // let pis: u8 = (self.current_search_space[ss]) as u8;
             let pig: u8 = (self.search_space[ss]/50.) as u8;
-            // let pib: u8 = (self.search_space[x+y*genome_length]/1024.) as u8;
             let pis: u8 = (self.current_search_space[ss]) as u8;
-            // let pix: u8 = (self.search_space[ss] * 1.) as u8;
             let pix: u8 = (self.search_space[ss]*1.) as u8;
 
             match visualisation {
@@ -240,30 +215,18 @@ impl Population {
 
 impl Dna {
     fn new(size: usize) -> Dna{
+
+        // Create new random population member
         let mut rng = rand::thread_rng();
-        // let mut person = Vec::with_capacity(size);
-        // let mut female_chromosome = Vec::with_capacity(size);
-        // let mut male_chromosome = Vec::with_capacity(size);
-        // for _ in 0..size {
-        //     person.push(rng.gen_range(0..size));
-        //     female_chromosome.push(rng.gen_range(0..size));
-        //     male_chromosome.push(rng.gen_range(0..size));
-        // }
         let mut person = Vec::from_iter(0..size);
         person.shuffle(&mut rng);
-        // let mut male_chromosome: Vec<usize> = (0..size).collect();
-        // let mut male_chromosome: Vec<usize> = vec![0; size];
         let mut m_chromosome: Vec<usize> = vec![0; size];
         let mut male_chromosome = Vec::from_iter(0..size);
         let mut female_chromosome: Vec<usize> = (0..size).collect();
         female_chromosome.shuffle(&mut rng);
         male_chromosome.shuffle(&mut rng);
         m_chromosome.shuffle(&mut rng);
-        // male_chromosome.push(999);
-        // female_chromosome.push(999);
-        // let epigenome = vec![0;size];
-        // let range = rand::thread_rng();
-        // let epigenome: Vec<u32> = range.sample_iter(&Standard).map(|x: u32| x % 2).take(size).collect();
+
         let epigenome:Vec<i32> = vec![0;size];
 
         match rng.gen_range(0..2){
@@ -310,11 +273,13 @@ impl Repair for  Vec<usize> {
     fn repair (&mut self){
         
         // Repair Dna
+
+        // Uncomment for verification checks
         // println!("Repairing");
         // let mut cpb = self.clone();
         // // cpb.sort();
         // println!("Before: {:?}", cpb);
-        //
+        
         let mut rng = rand::thread_rng();
         let genome_length = self.len();
         let mut ideal = Vec::from_iter(0..genome_length);
@@ -337,6 +302,8 @@ impl Repair for  Vec<usize> {
             let idx  = replace.pop().unwrap();
             self[idx] = ideal[i];
         }
+
+        // Uncomment for verification checks
         // let mut cpa = self.clone();
         // cpa.sort();
         // println!("After: {:?}", cpa);
@@ -348,11 +315,13 @@ impl Repair for  Dna {
     fn repair (&mut self){
         
         // Repair Dna
+
+        // Uncomment for verification checks
         // println!("Repairing");
         // let mut cpb = self.clone();
         // // cpb.sort();
         // println!("Before: {:?}", cpb);
-        //
+       
         let mut errors = 0;
         let mut rng = rand::thread_rng();
         let genome_length = self.genome_sequence.len();
@@ -373,8 +342,6 @@ impl Repair for  Dna {
             }
         }
 
-        // let seed = 1234;
-        // let mut rng = StdRng::seed_from_u64(seed);
 
         self.errors = errors;
         ideal.shuffle(&mut rng);
@@ -384,8 +351,8 @@ impl Repair for  Dna {
             self.male_chromosome[idx] = ideal[i];
             self.female_chromosome[idx] = ideal[i];
         }
-        // let mut cpa = self.clone();
-        // cpa.sort();
+
+        // Verification check
         // println!("After: {:?}", cpa);
         // panic!("Repairing Complete");
     }
@@ -403,19 +370,16 @@ impl fmt::Display for Sex {
 impl Fitness for Population{
     fn calculate_fitness(&mut self, schedule: &Schedule, organism_type: &OrganismType) {
         let genome = self.members[0].genome_sequence.len();
-        // let mut max_fitness = 0;
-        // let mut min_fitness = 0;
-        // let mut min_position = 0;
-        // let mut min_chromosome = 0;
         match genome{
             yes if yes == schedule.tasks.len() => {
 
                 
             for i in 0..self.members.len(){
+
                 // println!("Cecking fitness of member {i}");
                 self.members[i].calculate_fitness(&schedule, &organism_type);
 
-                // Additional code for epigenetic algorithm
+                // Additional code for epigenetic diploid algorithm
                 // if i == 0{
                 //     max_fitness = self.members[i].female_chromosome[genome];
                 //     min_fitness = self.members[i].female_chromosome[genome];
@@ -437,11 +401,12 @@ impl Fitness for Population{
                 //     // min_chromosome = 1;
                 // }              
             }
-            // println!("Max Fitness: {}", max_fitness);
-            // println!("Min Fitness: {}", min_fitness);    
-            // println!("Min Position: {}", min_position);
-            // println!("Min Chromosome: {}", min_chromosome);
-            // println!("Min Fitness: {}", self.members[min_position]);
+                // Verification checks
+                // println!("Max Fitness: {}", max_fitness);
+                // println!("Min Fitness: {}", min_fitness);    
+                // println!("Min Position: {}", min_position);
+                // println!("Min Chromosome: {}", min_chromosome);
+                // println!("Min Fitness: {}", self.members[min_position]);
 
                 // println!("Gene Checking: Passed")
             },

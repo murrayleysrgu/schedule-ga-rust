@@ -127,7 +127,7 @@ where
     let str = String::deserialize(deserializer)?;
     // println!("ctr: {}",str);
     let ctr: f64 = str.strip_suffix(" hrs").unwrap_or("0").parse().unwrap();
-        // .map_err(serde::de::Error::custom)
+    // .map_err(serde::de::Error::custom)
     // let ctr = cmp::max(1,(ctr /8.) as u64);
     Ok(ctr as u64) 
 }
@@ -262,12 +262,19 @@ pub fn create_schedule(jobs: usize) -> Schedule{
         println!("Task: {}",task);
 
         schedule.tasks.push(task);
+
+        // uncomment to shuffle the schedule
         // schedule.tasks.shuffle(&mut rng);
         // schedule.tasks.reverse()
 
     }
+
+    // uncomment to shuffle the schedule
     // schedule.tasks.reverse();
+    
     end_date = 0;
+
+    // uncomment to set the deadline for each task
     // for i in 0..jobs {
     //     end_date += schedule.tasks[i].ctr ;
     //     schedule.tasks[i].deadline = today.add_working_days(end_date as i64);

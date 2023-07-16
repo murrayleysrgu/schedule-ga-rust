@@ -57,8 +57,8 @@ fn main ()-> Result<(), Box<dyn Error>>{
     // panic!("manual stop to check code is functioning correctly");
 
     // Randomly Shuffle the tasks to create a random schedule - Harder to find solution?
-    let mut rng = thread_rng();
-    schedule.tasks.shuffle(&mut rng);
+    // let mut rng = thread_rng();
+    // schedule.tasks.shuffle(&mut rng);
    
     // schedule.reorder_tasks_by_id();
     // println!("Schedule:++ \n{}", schedule);
@@ -109,4 +109,24 @@ Ok(())
 
 
 
-
+// Uncomment to run the web server
+// #[macro_use]
+// extern crate rocket;
+//
+// use rocket::{Build, Rocket};
+//
+// // mod database;
+// // mod models;
+// // mod schema;
+// mod controller;
+//
+// #[launch]
+// fn rocket() -> Rocket<Build> {
+//     rocket::build().mount("/", routes![
+//         controller::index,
+//         controller::schedule,
+//         controller::data,
+//         controller::job_cards,
+//         controller::jobs
+//     ])
+// }
