@@ -11,8 +11,10 @@ version_check = "0.9.4"
 num_cpus = "1.14.0"
 serde = {version = "1.0", features = ["derive"]}
 serde_derive = "1.0"
+serde_json = "1.0"
 csv = "1.1"
 chrono = {version = "0.4", features = ["serde"]}
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
 
 env_logger = "0.10"
 error-iter = "0.4"
@@ -20,3 +22,6 @@ log = "0.4"
 pixels = "0.12.1"
 winit = "0.27"
 winit_input_helper = "0.13"
+
+diesel = { version = "2.1.0", features = ["postgres"] }
+dotenvy = "0.15"

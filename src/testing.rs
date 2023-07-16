@@ -4,12 +4,14 @@ use schedule_ga_rust::{
     read_schedule_from_csv,
     GeneticAlgorithmConfig, CrossoverMethod, MutationMethod, OrganismType
 };
-
 use schedule_ga_rust::schedule::Schedule;
-use rand::seq::SliceRandom;
-use rand::thread_rng;
+// use rand::seq::SliceRandom;
+// use rand::thread_rng;
+
 mod schedule;
 use schedule::{import_resources_from_csv, import_resource_calendar_from_csv,resource_count};
+
+
 use std::error::Error;
 use std::fs::File;
 use std::io::Write;
@@ -19,8 +21,10 @@ fn main ()-> Result<(), Box<dyn Error>>{
 
     let pop_size:usize = 66;
     let genome_length = 300;   // 363
+    // let csv = true;
     let csv = false;
     let visualise = true;
+    // let visualise = false;
     let diagnostics = false;
     let mut schedule: Schedule;
 
@@ -48,26 +52,20 @@ fn main ()-> Result<(), Box<dyn Error>>{
 
     let calendar = import_resource_calendar_from_csv("PersonDailyActivityDetail.csv");
 
-    let resources = import_resources_from_csv("resources.csv").unwrap(); 
-
-
-    // Uncomment to check the schedule and resources are being imported correctly
+    // let resources = import_resources_from_csv("resources.csv").unwrap(); 
     // println!("Resources: {}", resources);
+    // panic!("manual stop to check code");
     // println!("Schedule:+ \n{}", schedule);
-    // panic!("manual stop to check code is functioning correctly");
-
-    // Randomly Shuffle the tasks to create a random schedule - Harder to find solution?
-    let mut rng = thread_rng();
-    schedule.tasks.shuffle(&mut rng);
-   
+    // let mut rng = thread_rng();
+    // schedule.tasks.shuffle(&mut rng);
     // schedule.reorder_tasks_by_id();
     // println!("Schedule:++ \n{}", schedule);
     println!("First Task: {}", schedule.tasks[0]);
-
     let config = GeneticAlgorithmConfig {
         population_size: pop_size,
         mutation_rate: 0.0,
         max_generations: 100000,
+        // organism_type: OrganismType::Diploid,
         organism_type: OrganismType::Haploid,
         crossover_method: CrossoverMethod::Epigenetic,
         mutation_method: MutationMethod::Uniform,
@@ -77,36 +75,30 @@ fn main ()-> Result<(), Box<dyn Error>>{
 
     let optimal = genetics(&schedule, config);
 
-    // Uncomment to print out the optimal solution
+    // let optimal = simulation(schedule, config);
+    // let optimal = visual_simulation(schedule, config);
     // println!("\nOptimal Solution: {}", optimal.unwrap().members[0]);
     // println!("Optimal Solution found in generation {}", optimal.unwrap().evolution.len());
     // println!("{:?}",optimal.unwrap().evolution);
 
-    
-    // For report test results
-    // let mut writer = Writer::from_path("epi-evolution.csv")?;
-    //
-    //         for value in optimal.unwrap().evolution {
-    //             writer.write_record(&[value.to_string()])?;
-    //         }
+let mut writer = Writer::from_path("epi-evolution.csv")?;
 
-    // Uncomment to print out the dominance of the optimal solution
+        for value in optimal.unwrap().evolution {
+            writer.write_record(&[value.to_string()])?;
+        }
+
+
     // println!("Dominance: {:?}",optimal.unwrap().dominance);
 
-    // Uncomment to export the schedule based on the optimal solution to csv
-    let opt_solution = &optimal.unwrap().members[0].genome_sequence;
-    schedule.update_schedule_est(opt_solution);
-    schedule.reorder_tasks_by_order();
-    // println!("\nOptimal Schedule:\n{}", schedule);
-    schedule.export_to_csv("optimal.csv")
-        .expect("Faile to export optimal schedule to csv");
+    // let opt_solution = &optimal.unwrap().members[0].genome_sequence;
+    //
+    // schedule.update_schedule_est(opt_solution);
+    // schedule.reorder_tasks_by_order();
+    // // println!("\nOptimal Schedule:\n{}", schedule);
+    // schedule.export_to_csv("optimal.csv")
+    //     .expect("Faile to export optimal schedule to csv");
 
-    // Uncomment to view the optimal solution genome
     // println!("member: {}", optimal.members[0]);
 
 Ok(())
 }
-
-
-
-

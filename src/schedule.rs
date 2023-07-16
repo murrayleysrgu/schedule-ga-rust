@@ -6,7 +6,7 @@ use std::cmp;
 use std::fmt;
 use std::collections::HashMap;
 use rand::Rng;
-use rand::seq::SliceRandom;
+// use rand::seq::SliceRandom;
 use csv::WriterBuilder;
 use std::error::Error;
 use std::fs::File;
@@ -233,8 +233,8 @@ pub fn create_schedule(jobs: usize) -> Schedule{
     let mut end_dates = vec![0;8];
     for i in 0..jobs{
         let  ctr = rng.gen_range(1..5);
-        let workshop_id = rng.gen_range(0..8);
-        // let workshop_id =0;
+        let workshop_id = 0;// rng.gen_range(0..8);
+        let workshop_id =0;
         let workshop = workshops[workshop_id].to_string();
         end_dates[workshop_id] += ctr;
         end_date = end_dates[workshop_id];
@@ -276,6 +276,8 @@ pub fn create_schedule(jobs: usize) -> Schedule{
 
     // println!("Schedule Created: {}",schedule);
     // panic!("DEV PANIC: SCHEDULE CREATED");
+
+    assert_eq!(schedule.tasks.len(), jobs);
     schedule
  }
 

@@ -2,9 +2,11 @@ use std::time::Instant;
 use std::cmp::Ordering;
 use std::fmt;
 use rand::{Rng, seq::SliceRandom};
+// use rand::SeedableRng;
+// use rand::rngs::StdRng;
 // use rand::distributions::Standard;
 use version_check::Version;
-use std::cmp;
+// use std::cmp;
 
 pub mod schedule;
 pub use schedule::{Schedule, Task, WorkingDays, create_schedule, read_schedule_from_csv};
@@ -370,6 +372,10 @@ impl Repair for  Dna {
                 
             }
         }
+
+        // let seed = 1234;
+        // let mut rng = StdRng::seed_from_u64(seed);
+
         self.errors = errors;
         ideal.shuffle(&mut rng);
         for i in 0..replace.len(){
@@ -528,12 +534,16 @@ impl Breed for Population{
                                             break;
                                         }
                                 }
+
+                                // Diagnostic Print out for Testing and Debugging
                                 if config.diagnostics == true {
                                     println!("Crossover Point [{}]: {} {} -- {} {} ::: {} {}"
                                              ,next_generation.members.len(), crossover_point, crossover_point2
                                              ,parent1.epigenome[crossover_point], parent1.epigenome[crossover_point2],
                                              parent1.genome_sequence[crossover_point], parent1.genome_sequence[crossover_point2]);
                                 }
+
+                                // Add Random Mutation
                                 child.genome_sequence.swap(crossover_point, crossover_point2);
                                 if rng.gen_range(0..100) < (config.mutation_rate * 100.) as u64 {
                                     let crossover_point = rng.gen_range(0..genome_length);
@@ -750,7 +760,9 @@ impl Breed for Population{
                 let search_loc = j * genome_length + self.members[i].genome_sequence[j];
                 // let search_loc = j * genome_length + self.members[i].female_chromosome[j];
                 let prev = self.search_space[search_loc] ;
+                let prev_c = self.current_search_space[search_loc] ;
                 next_generation.search_space[search_loc] =  prev + 2.55;
+                // next_generation.current_search_space[search_loc] = prev_c + 255. / self.members.len() as f32; //255.;
                 next_generation.current_search_space[search_loc] = 255.;
             }
         }
@@ -776,10 +788,9 @@ impl Breed for Population{
             // last_best.m_chromosome      = self.members[i].m_chromosome.clone();
             next_generation.members.push(last_best);
         }
-        // print!("{},",next_generation.members[self.members.len()-best].fitness);
-        // print!("\n");
+
         assert_eq!(next_generation.members.len(),self.members.len());
-        // println!("Next Generation: {:?}", next_generation.members[0].female_chromosome);
+
         *self = next_generation;
     }
 
@@ -1012,27 +1023,27 @@ impl Fitness for Dna {
                 // }
                 //
                 //
-                let mut start_date_epi = 0;
-                for i in 0..self.genome_sequence.len(){
-                    if let Some(task) = schedule.tasks.get(self.genome_sequence[i]) {
-
-                        start_date_epi = start_date_epi + task.ctr;        
-                        let task_deadline = task.deadline_days.unwrap();
-                        if task_deadline < start_date_epi {
-                            // late = late + (start_date_epi - task_deadline);
-                            // score = score + (start_date_epi - task_deadline);
-                            self.epigenome[i] = (start_date_epi - task_deadline) as i32;
-                        }
-                        if task_deadline > start_date_epi {
-                            // score = score + (task_deadline - start_date_epi);
-                            // early = early + (task_deadline - start_date_epi);
-                            self.epigenome[i] = (start_date_epi - task_deadline) as i32;
-                        }
-                        } else {
-                            println!("Missing Task No.{}",&self.male_chromosome[i]);
-                            panic!("Task not found");
-                        }
-                }
+                // let mut start_date_epi = 0;
+                // for i in 0..self.genome_sequence.len(){
+                //     if let Some(task) = schedule.tasks.get(self.genome_sequence[i]) {
+                //
+                //         start_date_epi = start_date_epi + task.ctr;        
+                //         let task_deadline = task.deadline_days.unwrap();
+                //         if task_deadline < start_date_epi {
+                //             // late = late + (start_date_epi - task_deadline);
+                //             // score = score + (start_date_epi - task_deadline);
+                //             self.epigenome[i] = (start_date_epi - task_deadline) as i32;
+                //         }
+                //         if task_deadline > start_date_epi {
+                //             // score = score + (task_deadline - start_date_epi);
+                //             // early = early + (task_deadline - start_date_epi);
+                //             self.epigenome[i] = (start_date_epi - task_deadline) as i32;
+                //         }
+                //         } else {
+                //             println!("Missing Task No.{}",&self.male_chromosome[i]);
+                //             panic!("Task not found");
+                //         }
+                // }
 
                 
                 self.fitness = score;
@@ -1175,7 +1186,7 @@ fn visual_simulation(schedule: &Schedule, mut config: GeneticAlgorithmConfig) ->
         // let size = LogicalSize::new((genome_length * zoom) as f64, (population_size * zoom + genome_length) as f64);
         let size = LogicalSize::new((genome_length * zoom ) as f64, (population_size * zoom * 3+genome_length) as f64);
         WindowBuilder::new()
-            .with_title("Genetic Algorithm Population")
+            .with_title("Genetic Algorithm Population and Search Space Visualisation")
             .with_inner_size(size)
             .with_min_inner_size(size)
             .with_position(winit::dpi::PhysicalPosition::new(50,200))
@@ -1242,6 +1253,7 @@ fn visual_simulation(schedule: &Schedule, mut config: GeneticAlgorithmConfig) ->
             }
             if input.key_pressed(VirtualKeyCode::P) {
                 println!("\nFittest member:\n {}", world.members[0]);
+                println!("\nPopulation:\n {:?}", world.search_space);
                 // *control_flow = ControlFlow::Exit;
                 return;
             }
@@ -1384,6 +1396,8 @@ fn visual_simulation(schedule: &Schedule, mut config: GeneticAlgorithmConfig) ->
             first = false;
             play = false;
             window.request_redraw();
+            let expected = (0..world.members[0].genome_sequence.len()).collect::<Vec<usize>>();
+            // assert_eq!(world.members[0].genome_sequence,expected);
             // return world;
         }
         if i > config.max_generations {
